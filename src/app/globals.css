@@ -1,8 +1,27 @@
 @import "tailwindcss";
 
 :root {
+  /* Colores principales del proyecto */
+  --color-yellow-primary: #F5C842;
+  --color-green-text: #0D5F3F;
+  --color-orange-accent: #C85A2B;
+  --color-header-bg: #FDF4D9;
+  
+  /* Colores para las tarjetas de features */
+  --color-card-green: #D5E8E0;
+  --color-card-green-border: #A8C9BC;
+  --color-card-yellow: #FFF4E0;
+  --color-card-yellow-border: #FFE4A8;
+  --color-card-red: #FFE5E5;
+  --color-card-red-border: #FFB8B8;
+  
+  /* Backgrounds */
   --background: #ffffff;
+  --background-gray: #F5F5F5;
+  
+  /* Text colors */
   --foreground: #171717;
+  --text-secondary: #666666;
 }
 
 @theme inline {
@@ -10,13 +29,6 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
