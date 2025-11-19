@@ -4,7 +4,9 @@
   /* Colores principales del proyecto */
   --color-yellow-primary: #F5C842;
   --color-green-text: #0D5F3F;
+  --color-green-hover: #0a4a2f;
   --color-orange-accent: #C85A2B;
+  --color-orange-hover: #B54E23;
   --color-header-bg: #FDF4D9;
   
   /* Colores para las tarjetas de features */
@@ -18,10 +20,25 @@
   /* Backgrounds */
   --background: #ffffff;
   --background-gray: #F5F5F5;
+  --background-gray-50: #F9FAFB;
+  --background-gray-100: #F3F4F6;
+  --background-gray-200: #E5E7EB;
+  --background-gray-300: #D1D5DB;
+  
+  /* Borders */
+  --border-gray-200: #E5E7EB;
   
   /* Text colors */
   --foreground: #171717;
   --text-secondary: #666666;
+  --text-gray-500: #6B7280;
+  --text-white: #ffffff;
+  
+  /* Error/Alert colors */
+  --color-error-bg: #FEF2F2;
+  --color-error-border: #FECACA;
+  --color-error-text: #991B1B;
+  --color-error-text-red: #DC2626;
 }
 
 @theme inline {

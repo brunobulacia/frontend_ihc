@@ -126,6 +126,16 @@ export const useCartStore = create<CartStore>()(
 
       removeItem: async (itemId: string) => {
         try {
+          const { carritoId } = get();
+          
+          // Si es un item temporal (modo offline), solo actualizar estado local
+          if (itemId.startsWith('temp-') || carritoId?.startsWith('temp-')) {
+            set({ items: get().items.filter(item => item.id !== itemId) });
+            console.log('Item eliminado localmente (modo offline)');
+            return;
+          }
+          
+          // Si es un item real, eliminar del backend
           await itemsCarritoApi.delete(itemId);
           set({ items: get().items.filter(item => item.id !== itemId) });
         } catch (error) {
@@ -141,6 +151,20 @@ export const useCartStore = create<CartStore>()(
             return;
           }
 
+          const { carritoId } = get();
+          
+          // Si es un item temporal (modo offline), solo actualizar estado local
+          if (itemId.startsWith('temp-') || carritoId?.startsWith('temp-')) {
+            set({
+              items: get().items.map(item =>
+                item.id === itemId ? { ...item, cantidad } : item
+              ),
+            });
+            console.log('Cantidad actualizada localmente (modo offline)');
+            return;
+          }
+
+          // Si es un item real, actualizar en el backend
           await itemsCarritoApi.update(itemId, { cantidad });
           set({
             items: get().items.map(item =>
@@ -158,8 +182,19 @@ export const useCartStore = create<CartStore>()(
           const { carritoId, items } = get();
           if (!carritoId) return;
 
-          // Eliminar todos los items
-          await Promise.all(items.map(item => itemsCarritoApi.delete(item.id)));
+          // Si es un carrito temporal (modo offline), solo limpiar estado local
+          if (carritoId.startsWith('temp-')) {
+            set({ items: [] });
+            console.log('Carrito limpiado localmente (modo offline)');
+            return;
+          }
+
+          // Si es un carrito real, eliminar todos los items del backend
+          await Promise.all(
+            items
+              .filter(item => !item.id.startsWith('temp-'))  // Filtrar items temporales
+              .map(item => itemsCarritoApi.delete(item.id))
+          );
           set({ items: [] });
         } catch (error) {
           console.error('Error limpiando carrito:', error);

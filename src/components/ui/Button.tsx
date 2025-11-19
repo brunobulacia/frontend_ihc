@@ -1,9 +1,9 @@
-import React from 'react';
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline';
   size?: 'sm' | 'md' | 'lg';
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export function Button({ 
@@ -16,9 +16,9 @@ export function Button({
   const baseStyles = 'font-medium rounded-full transition-all duration-200 inline-flex items-center justify-center gap-2';
   
   const variants = {
-    primary: 'bg-[#C85A2B] hover:bg-[#B54E23] text-white shadow-md hover:shadow-lg',
-    secondary: 'bg-gray-200 hover:bg-gray-300 text-[#0D5F3F]',
-    outline: 'border-2 border-[#0D5F3F] text-[#0D5F3F] hover:bg-[#0D5F3F]/5',
+    primary: 'bg-[var(--color-orange-accent)] hover:bg-[var(--color-orange-hover)] text-[var(--text-white)] shadow-md hover:shadow-lg',
+    secondary: 'bg-[var(--background-gray-200)] hover:bg-[var(--background-gray-300)] text-[var(--color-green-text)]',
+    outline: 'border-2 border-[var(--color-green-text)] text-[var(--color-green-text)] hover:bg-[var(--color-green-text)]/5',
   };
   
   const sizes = {

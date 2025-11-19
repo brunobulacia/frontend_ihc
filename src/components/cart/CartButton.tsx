@@ -27,7 +27,7 @@ export function CartButton() {
         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
       </svg>
       {itemCount > 0 && (
-        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+        <span className="absolute -top-2 -right-2 bg-[var(--color-green-text)] text-[var(--text-white)] text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
           {itemCount}
         </span>
       )}

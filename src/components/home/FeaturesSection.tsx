@@ -1,4 +1,3 @@
-import React from 'react';
 import { Card } from '@/components/ui/Card';
 import { FEATURES } from '@/constants/config';
 
@@ -16,8 +15,8 @@ const colorVariants = {
 
 export function FeaturesSection() {
   return (
-    <section className="py-12">
-      <h2 className="text-3xl font-bold text-center text-[#0D5F3F] mb-4">
+    <section className="py-16">
+      <h2 className="text-3xl font-bold text-center text-[var(--color-green-text)] mb-4">
         ¿Por qué elegirnos?
       </h2>
       

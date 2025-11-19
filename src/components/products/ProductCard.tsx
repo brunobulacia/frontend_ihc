@@ -1,7 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
 import { Producto } from '@/types/producto';
-import { Button } from '@/components/ui/Button';
 
 interface ProductCardProps {
   producto: Producto;
@@ -10,8 +9,6 @@ interface ProductCardProps {
 
 export function ProductCard({ producto, onAddToCart }: ProductCardProps) {
   const [cantidad, setCantidad] = React.useState(1);
-  const [imgSrc, setImgSrc] = React.useState(`/productos/${producto.id}.jpg`);
-  const [imgError, setImgError] = React.useState(false);
 
   const handleIncrement = () => {
     if (cantidad < producto.stock) {
@@ -27,59 +24,54 @@ export function ProductCard({ producto, onAddToCart }: ProductCardProps) {
 
   const handleAddToCart = () => {
     onAddToCart(producto);
-    setCantidad(1); // Reset después de agregar
+    setCantidad(1);
   };
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+    <div className="bg-[var(--background)] rounded-xl sm:rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
       {/* Imagen del producto */}
-      <div className="relative h-48 bg-gray-100">
+      <div className="relative h-40 sm:h-48 bg-[var(--background-gray-100)]">
         <Image
-          src={imgError ? '/chicken-plate.jpg' : imgSrc}
+          src='/chicken-plate.jpg'
           alt={producto.nombre}
           fill
           className="object-cover"
-          onError={() => {
-            if (!imgError) {
-              setImgError(true);
-            }
-          }}
         />
       </div>
 
       {/* Información del producto */}
-      <div className="p-4 space-y-3">
+      <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
         <div>
-          <h3 className="font-bold text-lg text-[#0D5F3F] line-clamp-1">
+          <h3 className="font-bold text-base sm:text-lg text-[var(--color-green-text)] line-clamp-1">
             {producto.nombre}
           </h3>
-          <p className="text-sm text-[#C85A2B] mt-1 line-clamp-2">
+          <p className="text-xs sm:text-sm text-[var(--color-orange-accent)] mt-1 line-clamp-2">
             {producto.descripcion}
           </p>
         </div>
 
         {/* Precio y controles */}
-        <div className="flex items-center justify-between pt-2">
-          <span className="font-bold text-xl text-[#0D5F3F]">
+        <div className="flex items-center justify-between pt-1 sm:pt-2">
+          <span className="font-bold text-lg sm:text-xl text-[#0D5F3F]">
             Bs. {producto.precio.toFixed(2)}
           </span>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Contador de cantidad */}
-            <div className="flex items-center gap-2 bg-gray-100 rounded-full px-2 py-1">
+            <div className="flex items-center gap-1 sm:gap-2 bg-gray-100 rounded-full px-1.5 sm:px-2 py-1">
               <button
                 onClick={handleDecrement}
-                className="w-6 h-6 flex items-center justify-center text-[#0D5F3F] hover:bg-gray-200 rounded-full transition-colors"
+                className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-[#0D5F3F] hover:bg-gray-200 rounded-full transition-colors text-sm sm:text-base"
                 disabled={cantidad <= 1}
               >
                 -
               </button>
-              <span className="w-6 text-center font-medium text-[#0D5F3F]">
+              <span className="w-5 sm:w-6 text-center font-medium text-[#0D5F3F] text-sm sm:text-base">
                 {cantidad}
               </span>
               <button
                 onClick={handleIncrement}
-                className="w-6 h-6 flex items-center justify-center text-[#0D5F3F] hover:bg-gray-200 rounded-full transition-colors"
+                className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-[#0D5F3F] hover:bg-gray-200 rounded-full transition-colors text-sm sm:text-base"
                 disabled={cantidad >= producto.stock}
               >
                 +
@@ -89,18 +81,19 @@ export function ProductCard({ producto, onAddToCart }: ProductCardProps) {
             {/* Botón agregar */}
             <button
               onClick={handleAddToCart}
-              className="w-10 h-10 bg-[#0D5F3F] hover:bg-[#0D5F3F]/90 text-white rounded-full flex items-center justify-center transition-colors shadow-md"
+              className="w-9 h-9 sm:w-10 sm:h-10 bg-[#0D5F3F] hover:bg-[#0D5F3F]/90 text-white rounded-full flex items-center justify-center transition-colors shadow-md active:scale-95"
               disabled={producto.stock === 0}
             >
               <svg
-                width="20"
-                height="20"
+                width="18"
+                height="18"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                className="sm:w-5 sm:h-5"
               >
                 <circle cx="9" cy="21" r="1" />
                 <circle cx="20" cy="21" r="1" />
