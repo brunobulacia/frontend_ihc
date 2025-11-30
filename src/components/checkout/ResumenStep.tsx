@@ -7,6 +7,7 @@ import type { CartItem } from '@/types/carrito';
 import { useCartStore } from '@/lib/store/cartStore';
 import { useCreatePedido } from '@/lib/query/usePedidos';
 import Link from 'next/link';
+import { remoteLog } from '@/lib/utils/remoteLog';
 
 interface ResumenStepProps {
   direccion: string;
@@ -39,18 +40,41 @@ export function ResumenStep({
       try {
         // Telegram pasa el parámetro startapp con el userId
         const userId = searchParams.get('userId') || searchParams.get('tgWebAppStartParam') || '';
-        if (!userId) throw new Error('userId no definido');
+        
+        remoteLog.info('🔍 ResumenStep - Intentando crear pedido', {
+          userId,
+          tgWebAppStartParam: searchParams.get('tgWebAppStartParam'),
+          allParams: Object.fromEntries(searchParams.entries()),
+          direccion,
+          itemsCount: items.length
+        });
+
+        if (!userId) {
+          remoteLog.error('ResumenStep - userId no definido', {
+            searchParamsKeys: Array.from(searchParams.keys())
+          });
+          throw new Error('userId no definido');
+        }
+
+        remoteLog.info('ResumenStep - Creando pedido en backend...', { userId, direccion });
         const result = await createPedido.mutateAsync({
           userId,
           direccion,
         });
         
         if (result && result.pedidoId) {
+          remoteLog.info('✅ ResumenStep - Pedido creado exitosamente', {
+            pedidoId: result.pedidoId
+          });
           setPedidoId(result.pedidoId);
         }
         await clearCart();
+        remoteLog.info('ResumenStep - Carrito limpiado');
       } catch (error) {
-        console.error('Error al crear pedido:', error);
+        remoteLog.error('ResumenStep - Error al crear pedido', {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined
+        });
         // Aún así limpiamos el carrito para evitar estados inconsistentes
         await clearCart();
       }

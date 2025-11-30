@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { CartItem, Producto } from '@/types/carrito';
 import { carritosApi, itemsCarritoApi, productosApi } from '@/lib/api/client';
+import { remoteLog } from '@/lib/utils/remoteLog';
 
 interface CartStore {
   items: CartItem[];
@@ -33,16 +34,18 @@ export const useCartStore = create<CartStore>()(
           set({ isLoading: true });
           const carritoId = get().carritoId;
           
+          remoteLog.info('🔵 CartStore.initCarrito - Iniciando', { userId, carritoId });
+          
           // Si no hay carrito, crear uno nuevo
           if (!carritoId) {
-            console.log('🔵 Intentando crear carrito para usuario:', userId);
+            remoteLog.info('CartStore - Creando nuevo carrito', { userId });
             const carrito = await carritosApi.create(userId);
             set({ carritoId: carrito.id, items: [] });
-            console.log('✅ Carrito creado exitosamente:', carrito.id);
+            remoteLog.info('✅ CartStore - Carrito creado', { carritoId: carrito.id });
           } else {
             // Cargar items del carrito existente
             try {
-              console.log('🔵 Intentando cargar carrito existente:', carritoId);
+              remoteLog.info('CartStore - Cargando carrito existente', { carritoId });
               const carrito = await carritosApi.getById(carritoId);
               
               // Verificar que itemCarrito existe y es un array
@@ -56,26 +59,35 @@ export const useCartStore = create<CartStore>()(
                   }))
                 );
                 set({ items: itemsWithProducts });
-                console.log('✅ Carrito cargado (solo activos):', carritoId);
+                remoteLog.info('✅ CartStore - Carrito cargado', {
+                  carritoId,
+                  itemsCount: itemsWithProducts.length
+                });
               } else {
                 // Si el carrito no tiene items o es inválido, iniciar vacío
                 set({ items: [] });
-                console.log('⚠️ Carrito sin items:', carritoId);
+                remoteLog.warn('⚠️ CartStore - Carrito sin items', { carritoId });
               }
             } catch (loadError) {
-              console.error('❌ Error cargando carrito existente:', loadError);
+              remoteLog.error('❌ CartStore - Error cargando carrito', {
+                error: loadError instanceof Error ? loadError.message : String(loadError),
+                carritoId
+              });
               // Si falla cargar el carrito, crear uno nuevo
               const carrito = await carritosApi.create(userId);
               set({ carritoId: carrito.id, items: [] });
-              console.log('✅ Nuevo carrito creado después de error:', carrito.id);
+              remoteLog.info('✅ CartStore - Nuevo carrito tras error', { carritoId: carrito.id });
             }
           }
         } catch (error) {
-          console.error('❌ Error fatal inicializando carrito:', error);
+          remoteLog.error('❌ CartStore - Error fatal inicializando', {
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined
+          });
           // En caso de error, crear un carrito local temporal
           const tempCarritoId = `temp-${Date.now()}`;
           set({ carritoId: tempCarritoId, items: [] });
-          console.log('⚠️ Carrito TEMPORAL creado (modo offline):', tempCarritoId);
+          remoteLog.warn('⚠️ CartStore - Carrito temporal creado (offline)', { carritoId: tempCarritoId });
         } finally {
           set({ isLoading: false });
         }
@@ -86,16 +98,23 @@ export const useCartStore = create<CartStore>()(
           const { items, carritoId } = get();
           
           if (!carritoId) {
+            remoteLog.error('CartStore.addItem - Carrito no inicializado', { productoId: producto.id });
             throw new Error('Carrito no inicializado');
           }
 
-          console.log('🔵 Agregando producto al carrito:', { productoId: producto.id, cantidad, carritoId });
+          remoteLog.info('🔵 CartStore.addItem - Agregando producto', {
+            productoId: producto.id,
+            cantidad,
+            carritoId
+          });
 
           // Verificar si el producto ya existe en el carrito
           const existingItem = items.find(item => item.productoId === producto.id);
 
           if (existingItem) {
-            console.log('📝 Producto ya existe, actualizando cantidad');
+            remoteLog.info('CartStore - Producto ya existe, actualizando cantidad', {
+              itemId: existingItem.id
+            });
             // Actualizar cantidad
             await get().updateItemQuantity(existingItem.id, existingItem.cantidad + cantidad);
           } else {
