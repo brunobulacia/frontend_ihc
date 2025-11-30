@@ -25,6 +25,7 @@ function MenuContent() {
   const userId = searchParams.get('userId') || '';
   
   useEffect(() => {
+    console.log('userId en menu:', userId);
     if (userId) {
       initCarrito(userId);
     }
