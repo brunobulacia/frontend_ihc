@@ -1,37 +1,48 @@
 'use client';
 
+
 import { Header } from '@/components/layout/Header';
-import { useVentas } from '@/lib/query/useVentas';
-import { EstadoVenta } from '@/types/venta';
+import { usePedidos } from '@/lib/query/usePedidos';
+import { EstadoPedido } from '@/types/pedido';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-const TEMP_USER_ID = 'temp-user-id';
-
+// TODO: Reemplazar '' por el userId real (por ejemplo, desde props, contexto o parámetro)
 export default function PedidosPage() {
   const router = useRouter();
-  const { data: ventas, isLoading, error } = useVentas(TEMP_USER_ID);
+  const userId = '';
+  const { data: pedidos, isLoading, error } = usePedidos(userId);
 
-  const getEstadoColor = (estado: EstadoVenta) => {
+  const getEstadoColor = (estado: EstadoPedido) => {
     switch (estado) {
-      case EstadoVenta.COMPLETADA:
+      case EstadoPedido.ENTREGADO:
         return 'text-[var(--color-green-text)] bg-green-50';
-      case EstadoVenta.PENDIENTE:
+      case EstadoPedido.PENDIENTE:
+      case EstadoPedido.ACEPTADO:
         return 'text-[var(--color-yellow-primary)] bg-yellow-50';
-      case EstadoVenta.CANCELADA:
+      case EstadoPedido.EN_CAMINO:
+      case EstadoPedido.RECOGIDO:
+        return 'text-blue-600 bg-blue-50';
+      case EstadoPedido.CANCELADO:
         return 'text-red-600 bg-red-50';
       default:
         return 'text-gray-600 bg-gray-50';
     }
   };
 
-  const getEstadoTexto = (estado: EstadoVenta) => {
+  const getEstadoTexto = (estado: EstadoPedido) => {
     switch (estado) {
-      case EstadoVenta.COMPLETADA:
+      case EstadoPedido.ENTREGADO:
         return 'Entregado';
-      case EstadoVenta.PENDIENTE:
+      case EstadoPedido.PENDIENTE:
         return 'En preparación';
-      case EstadoVenta.CANCELADA:
+      case EstadoPedido.ACEPTADO:
+        return 'Aceptado';
+      case EstadoPedido.RECOGIDO:
+        return 'Recogido';
+      case EstadoPedido.EN_CAMINO:
+        return 'En camino';
+      case EstadoPedido.CANCELADO:
         return 'Cancelado';
       default:
         return estado;
@@ -84,7 +95,7 @@ export default function PedidosPage() {
             </div>
           )}
 
-          {!isLoading && !error && ventas && ventas.length === 0 && (
+          {!isLoading && !error && pedidos && pedidos.length === 0 && (
             <div className="text-center py-12 bg-[var(--background)] rounded-2xl shadow-lg">
               <svg className="w-16 h-16 mx-auto text-[var(--text-secondary)] mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
@@ -100,41 +111,41 @@ export default function PedidosPage() {
             </div>
           )}
 
-          {ventas?.map((venta: { id: string; estado: EstadoVenta; fechaVenta: string; total: number; detalleVentas?: Array<{ id: string; cantidad: number; producto: { nombre: string } }> }) => (
+          {pedidos?.map((pedido: { id: string; estado: EstadoPedido; fechaCreacion: string; total: number; detallesPedido?: Array<{ id: string; cantidad: number; producto: { nombre: string } }> }) => (
             <Link
-              key={venta.id}
-              href={`/pedidos/${venta.id}`}
+              key={pedido.id}
+              href={`/pedidos/${pedido.id}`}
               className="block bg-[var(--background)] rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow"
             >
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="font-bold text-lg text-[var(--color-green-text)]">
-                      ORD-{venta.id.slice(0, 8).toUpperCase()}
+                      ORD-{pedido.id.slice(0, 8).toUpperCase()}
                     </h3>
-                    <span className={`text-xs font-medium px-3 py-1 rounded-full ${getEstadoColor(venta.estado)}`}>
-                      {getEstadoTexto(venta.estado)}
+                    <span className={`text-xs font-medium px-3 py-1 rounded-full ${getEstadoColor(pedido.estado)}`}>
+                      {getEstadoTexto(pedido.estado)}
                     </span>
                   </div>
                   <p className="text-sm text-[var(--text-secondary)]">
-                    {formatDate(venta.fechaVenta)}
+                    {formatDate(pedido.fechaCreacion)}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-[var(--text-secondary)] mb-1">Total</p>
                   <p className="text-xl font-bold text-[var(--color-green-text)]">
-                    Bs. {venta.total.toFixed(2)}
+                    Bs. {pedido.total.toFixed(2)}
                   </p>
                 </div>
               </div>
 
               <div className="border-t border-[var(--border-gray-200)] pt-4">
                 <p className="text-sm text-[var(--text-secondary)] mb-2">
-                  Productos: {venta.detalleVentas?.length || 0}
+                  Productos: {pedido.detallesPedido?.length || 0}
                 </p>
-                {venta.detalleVentas && venta.detalleVentas.length > 0 && (
+                {pedido.detallesPedido && pedido.detallesPedido.length > 0 && (
                   <div className="flex flex-wrap gap-2">
-                    {venta.detalleVentas.slice(0, 3).map((detalle: { id: string; cantidad: number; producto: { nombre: string } }) => (
+                    {pedido.detallesPedido.slice(0, 3).map((detalle: { id: string; cantidad: number; producto: { nombre: string } }) => (
                       <span
                         key={detalle.id}
                         className="text-xs bg-[var(--background-gray-50)] text-[var(--foreground)] px-2 py-1 rounded"
@@ -142,9 +153,9 @@ export default function PedidosPage() {
                         {detalle.cantidad}x {detalle.producto.nombre}
                       </span>
                     ))}
-                    {venta.detalleVentas.length > 3 && (
+                    {pedido.detallesPedido.length > 3 && (
                       <span className="text-xs text-[var(--text-secondary)] px-2 py-1">
-                        +{venta.detalleVentas.length - 3} más
+                        +{pedido.detallesPedido.length - 3} más
                       </span>
                     )}
                   </div>

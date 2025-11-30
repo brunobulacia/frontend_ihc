@@ -35,42 +35,47 @@ export const useCartStore = create<CartStore>()(
           
           // Si no hay carrito, crear uno nuevo
           if (!carritoId) {
+            console.log('🔵 Intentando crear carrito para usuario:', userId);
             const carrito = await carritosApi.create(userId);
             set({ carritoId: carrito.id, items: [] });
-            console.log('Carrito creado:', carrito.id);
+            console.log('✅ Carrito creado exitosamente:', carrito.id);
           } else {
             // Cargar items del carrito existente
             try {
+              console.log('🔵 Intentando cargar carrito existente:', carritoId);
               const carrito = await carritosApi.getById(carritoId);
               
               // Verificar que itemCarrito existe y es un array
               if (carrito && Array.isArray(carrito.itemCarrito)) {
+                // Filtrar solo los items activos
+                const itemsActivos = carrito.itemCarrito.filter((item) => item.isActive);
                 const itemsWithProducts = await Promise.all(
-                  carrito.itemCarrito.map(async (item) => ({
+                  itemsActivos.map(async (item) => ({
                     ...item,
                     producto: await productosApi.getById(item.productoId),
                   }))
                 );
                 set({ items: itemsWithProducts });
-                console.log('Carrito cargado:', carritoId);
+                console.log('✅ Carrito cargado (solo activos):', carritoId);
               } else {
                 // Si el carrito no tiene items o es inválido, iniciar vacío
                 set({ items: [] });
-                console.log('Carrito sin items:', carritoId);
+                console.log('⚠️ Carrito sin items:', carritoId);
               }
             } catch (loadError) {
-              console.error('Error cargando carrito existente, creando uno nuevo:', loadError);
+              console.error('❌ Error cargando carrito existente:', loadError);
               // Si falla cargar el carrito, crear uno nuevo
               const carrito = await carritosApi.create(userId);
               set({ carritoId: carrito.id, items: [] });
+              console.log('✅ Nuevo carrito creado después de error:', carrito.id);
             }
           }
         } catch (error) {
-          console.error('Error inicializando carrito:', error);
+          console.error('❌ Error fatal inicializando carrito:', error);
           // En caso de error, crear un carrito local temporal
           const tempCarritoId = `temp-${Date.now()}`;
           set({ carritoId: tempCarritoId, items: [] });
-          console.log('Carrito temporal creado:', tempCarritoId);
+          console.log('⚠️ Carrito TEMPORAL creado (modo offline):', tempCarritoId);
         } finally {
           set({ isLoading: false });
         }
@@ -84,15 +89,19 @@ export const useCartStore = create<CartStore>()(
             throw new Error('Carrito no inicializado');
           }
 
+          console.log('🔵 Agregando producto al carrito:', { productoId: producto.id, cantidad, carritoId });
+
           // Verificar si el producto ya existe en el carrito
           const existingItem = items.find(item => item.productoId === producto.id);
 
           if (existingItem) {
+            console.log('📝 Producto ya existe, actualizando cantidad');
             // Actualizar cantidad
             await get().updateItemQuantity(existingItem.id, existingItem.cantidad + cantidad);
           } else {
             // Si es un carrito temporal (offline), agregar localmente
             if (carritoId.startsWith('temp-')) {
+              console.log('⚠️ Modo OFFLINE: agregando item localmente');
               const tempItem: CartItem = {
                 id: `temp-item-${Date.now()}`,
                 carritoId,
@@ -104,8 +113,9 @@ export const useCartStore = create<CartStore>()(
                 updatedAt: new Date(),
               };
               set({ items: [...items, tempItem] });
-              console.log('Item agregado localmente (modo offline)');
+              console.log('✅ Item agregado localmente (modo offline)');
             } else {
+              console.log('🔵 Creando item en backend...');
               // Crear nuevo item en el backend
               const newItem = await itemsCarritoApi.create({
                 carritoId,
@@ -116,10 +126,11 @@ export const useCartStore = create<CartStore>()(
               set({
                 items: [...items, { ...newItem, producto }],
               });
+              console.log('✅ Item agregado correctamente:', newItem.id);
             }
           }
         } catch (error) {
-          console.error('Error agregando item:', error);
+          console.error('❌ Error agregando item:', error);
           throw error;
         }
       },
@@ -179,23 +190,16 @@ export const useCartStore = create<CartStore>()(
 
       clearCart: async () => {
         try {
-          const { carritoId, items } = get();
+          const { carritoId } = get();
           if (!carritoId) return;
 
-          // Si es un carrito temporal (modo offline), solo limpiar estado local
-          if (carritoId.startsWith('temp-')) {
-            set({ items: [] });
-            console.log('Carrito limpiado localmente (modo offline)');
-            return;
-          }
-
-          // Si es un carrito real, eliminar todos los items del backend
-          await Promise.all(
-            items
-              .filter(item => !item.id.startsWith('temp-'))  // Filtrar items temporales
-              .map(item => itemsCarritoApi.delete(item.id))
-          );
+          // Limpiar solo el estado local, tanto para carrito temporal como real
           set({ items: [] });
+          if (carritoId.startsWith('temp-')) {
+            console.log('Carrito limpiado localmente (modo offline)');
+          } else {
+            console.log('Carrito limpiado localmente (carrito real, backend ya lo limpió)');
+          }
         } catch (error) {
           console.error('Error limpiando carrito:', error);
           throw error;

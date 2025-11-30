@@ -19,9 +19,13 @@ export default function MenuPage() {
   } = useProductos();
 
   // Inicializar carrito
+  // TODO: Reemplazar 'userId' por el valor real (por ejemplo, desde contexto o props)
+  const userId = '';
   useEffect(() => {
-    initCarrito('temp-user-id');
-  }, [initCarrito]);
+    if (userId) {
+      initCarrito(userId);
+    }
+  }, [initCarrito, userId]);
 
   const handleAddToCart = async (producto: Producto) => {
     try {

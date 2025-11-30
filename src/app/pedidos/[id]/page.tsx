@@ -2,8 +2,8 @@
 
 import { use } from 'react';
 import { Header } from '@/components/layout/Header';
-import { useVenta } from '@/lib/query/useVentas';
-import { EstadoVenta, EstadoPago } from '@/types/venta';
+import { usePedido } from '@/lib/query/usePedidos';
+import { EstadoPedido } from '@/types/pedido';
 import { useRouter } from 'next/navigation';
 
 interface PageProps {
@@ -13,28 +13,38 @@ interface PageProps {
 export default function DetallePedidoPage({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
-  const { data: venta, isLoading, error } = useVenta(id);
+  const { data: pedido, isLoading, error } = usePedido(id);
 
-  const getEstadoColor = (estado: EstadoVenta) => {
+  const getEstadoColor = (estado: EstadoPedido) => {
     switch (estado) {
-      case EstadoVenta.COMPLETADA:
+      case EstadoPedido.ENTREGADO:
         return 'text-[var(--color-green-text)] bg-green-50';
-      case EstadoVenta.PENDIENTE:
+      case EstadoPedido.PENDIENTE:
+      case EstadoPedido.ACEPTADO:
         return 'text-[var(--color-yellow-primary)] bg-yellow-50';
-      case EstadoVenta.CANCELADA:
+      case EstadoPedido.EN_CAMINO:
+      case EstadoPedido.RECOGIDO:
+        return 'text-blue-600 bg-blue-50';
+      case EstadoPedido.CANCELADO:
         return 'text-red-600 bg-red-50';
       default:
         return 'text-gray-600 bg-gray-50';
     }
   };
 
-  const getEstadoTexto = (estado: EstadoVenta) => {
+  const getEstadoTexto = (estado: EstadoPedido) => {
     switch (estado) {
-      case EstadoVenta.COMPLETADA:
+      case EstadoPedido.ENTREGADO:
         return 'Entregado';
-      case EstadoVenta.PENDIENTE:
+      case EstadoPedido.PENDIENTE:
         return 'En preparación';
-      case EstadoVenta.CANCELADA:
+      case EstadoPedido.ACEPTADO:
+        return 'Aceptado';
+      case EstadoPedido.RECOGIDO:
+        return 'Recogido';
+      case EstadoPedido.EN_CAMINO:
+        return 'En camino';
+      case EstadoPedido.CANCELADO:
         return 'Cancelado';
       default:
         return estado;
@@ -52,13 +62,19 @@ export default function DetallePedidoPage({ params }: PageProps) {
     });
   };
 
-  const getEstadoStep = (estado: EstadoVenta): number => {
+  const getEstadoStep = (estado: EstadoPedido): number => {
     switch (estado) {
-      case EstadoVenta.PENDIENTE:
+      case EstadoPedido.PENDIENTE:
+        return 1;
+      case EstadoPedido.ACEPTADO:
         return 2;
-      case EstadoVenta.COMPLETADA:
+      case EstadoPedido.RECOGIDO:
+        return 3;
+      case EstadoPedido.EN_CAMINO:
+        return 4;
+      case EstadoPedido.ENTREGADO:
         return 5;
-      case EstadoVenta.CANCELADA:
+      case EstadoPedido.CANCELADO:
         return 0;
       default:
         return 0;
@@ -79,7 +95,7 @@ export default function DetallePedidoPage({ params }: PageProps) {
     );
   }
 
-  if (error || !venta) {
+  if (error || !pedido) {
     return (
       <div className="min-h-screen bg-[var(--background-beige)]">
         <Header />
@@ -92,9 +108,9 @@ export default function DetallePedidoPage({ params }: PageProps) {
     );
   }
 
-  const currentStep = getEstadoStep(venta.estado);
-  const subtotal = venta.detalleVentas?.reduce((sum: number, det: { precioUnit: number; cantidad: number }) => sum + (det.precioUnit * det.cantidad), 0) || 0;
-  const envio = venta.total - subtotal;
+  const currentStep = getEstadoStep(pedido.estado);
+  const subtotal = pedido.detallesPedido?.reduce((sum: number, det: { precioUnit: number; cantidad: number }) => sum + (det.precioUnit * det.cantidad), 0) || 0;
+  const envio = pedido.total - subtotal;
 
   return (
     <div className="min-h-screen bg-[var(--background-beige)]">
@@ -120,20 +136,20 @@ export default function DetallePedidoPage({ params }: PageProps) {
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h1 className="text-2xl font-bold text-[var(--color-green-text)] mb-2">
-                    ORD-{venta.id.slice(0, 8).toUpperCase()}
+                    ORD-{pedido.id.slice(0, 8).toUpperCase()}
                   </h1>
                   <p className="text-sm text-[var(--text-secondary)]">
-                    Pedido realizado el {formatDate(venta.fechaVenta)}
+                    Pedido realizado el {formatDate(pedido.fechaCreacion)}
                   </p>
                 </div>
-                <span className={`text-sm font-medium px-4 py-2 rounded-full ${getEstadoColor(venta.estado)}`}>
-                  {getEstadoTexto(venta.estado)}
+                <span className={`text-sm font-medium px-4 py-2 rounded-full ${getEstadoColor(pedido.estado)}`}>
+                  {getEstadoTexto(pedido.estado)}
                 </span>
               </div>
             </div>
 
             {/* Timeline del pedido */}
-            {venta.estado !== EstadoVenta.CANCELADA && (
+            {pedido.estado !== EstadoPedido.CANCELADO && (
               <div className="bg-[var(--background)] rounded-2xl shadow-lg p-6">
                 <h2 className="font-bold text-lg text-[var(--color-green-text)] mb-6">
                   Estado del pedido
@@ -233,7 +249,7 @@ export default function DetallePedidoPage({ params }: PageProps) {
               <h2 className="font-bold text-lg text-[var(--color-green-text)] mb-4">Productos</h2>
               
               <div className="space-y-3">
-                {venta.detalleVentas?.map((detalle: { id: string; producto: { nombre: string }; cantidad: number; precioUnit: number }) => (
+                {pedido.detallesPedido?.map((detalle: { id: string; producto: { nombre: string }; cantidad: number; precioUnit: number }) => (
                   <div key={detalle.id} className="flex justify-between items-start py-3 border-b border-[var(--border-gray-200)] last:border-0">
                     <div className="flex-1">
                       <p className="font-medium text-[var(--foreground)]">{detalle.producto.nombre}</p>
@@ -268,12 +284,12 @@ export default function DetallePedidoPage({ params }: PageProps) {
                 <div className="flex justify-between items-center">
                   <span className="font-bold text-[var(--foreground)]">Total:</span>
                   <span className="font-bold text-xl text-[var(--color-green-text)]">
-                    Bs. {venta.total.toFixed(2)}
+                    Bs. {pedido.total.toFixed(2)}
                   </span>
                 </div>
               </div>
 
-              {venta.pago && (
+              {pedido.pago && (
                 <div className="mt-4 pt-4 border-t border-[var(--border-gray-200)]">
                   <p className="text-sm text-[var(--text-secondary)] mb-2">Método de pago</p>
                   <div className="flex items-center gap-2">
@@ -282,19 +298,9 @@ export default function DetallePedidoPage({ params }: PageProps) {
                       <line x1="2" y1="10" x2="22" y2="10"/>
                     </svg>
                     <span className="font-medium text-[var(--foreground)]">
-                      {venta.pago.metodoPago.metodo}
+                      {pedido.pago.metodo}
                     </span>
                   </div>
-                  <p className={`text-xs mt-2 px-2 py-1 inline-block rounded ${
-                    venta.pago.estado === EstadoPago.COMPLETADO
-                      ? 'bg-green-50 text-green-700'
-                      : venta.pago.estado === EstadoPago.PENDIENTE
-                      ? 'bg-yellow-50 text-yellow-700'
-                      : 'bg-red-50 text-red-700'
-                  }`}>
-                    {venta.pago.estado === EstadoPago.COMPLETADO ? 'Pagado' : 
-                     venta.pago.estado === EstadoPago.PENDIENTE ? 'Pendiente' : 'Fallido'}
-                  </p>
                 </div>
               )}
             </div>

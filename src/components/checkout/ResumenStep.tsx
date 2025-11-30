@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/Button';
 import type { CartItem } from '@/types/carrito';
 import { useCartStore } from '@/lib/store/cartStore';
-import { useCreateVenta } from '@/lib/query/useVentas';
+import { useCreatePedido } from '@/lib/query/usePedidos';
 import Link from 'next/link';
 
 interface ResumenStepProps {
@@ -15,7 +15,6 @@ interface ResumenStepProps {
   onVolverMenu: () => void;
 }
 
-const TEMP_USER_ID = 'temp-user-id';
 
 export function ResumenStep({ 
   direccion, 
@@ -25,40 +24,38 @@ export function ResumenStep({
   onVolverMenu 
 }: ResumenStepProps) {
   const { clearCart } = useCartStore();
-  const createVenta = useCreateVenta();
-  const [ventaId, setVentaId] = useState<string | null>(null);
+  const createPedido = useCreatePedido();
+  const [pedidoId, setPedidoId] = useState<string | null>(null);
   const hasCreated = useRef(false);
 
-  // Crear venta y limpiar carrito cuando se confirma el pedido
+  // Crear pedido y limpiar carrito cuando se confirma el pedido
   useEffect(() => {
     if (hasCreated.current) return;
     hasCreated.current = true;
 
-    const crearVenta = async () => {
+    const crearPedido = async () => {
       try {
-        const ventaCreada = await createVenta.mutateAsync({
-          userId: TEMP_USER_ID,
-          items: items.map((item) => ({
-            productoId: item.productoId,
-            cantidad: item.cantidad,
-            precioUnit: item.producto.precio,
-          })),
+        // TODO: Reemplazar 'userId' por el valor real (por ejemplo, desde props)
+        const userId = '';
+        if (!userId) throw new Error('userId no definido');
+        const result = await createPedido.mutateAsync({
+          userId,
           direccion,
         });
         
-        if (ventaCreada && typeof ventaCreada === 'object' && 'id' in ventaCreada) {
-          setVentaId(ventaCreada.id as string);
+        if (result && result.pedidoId) {
+          setPedidoId(result.pedidoId);
         }
         await clearCart();
       } catch (error) {
-        console.error('Error al crear venta:', error);
+        console.error('Error al crear pedido:', error);
         // Aún así limpiamos el carrito para evitar estados inconsistentes
         await clearCart();
       }
     };
 
-    crearVenta();
-  }, [items, direccion, createVenta, clearCart]);
+    crearPedido();
+  }, [items, direccion, createPedido, clearCart]);
 
   return (
     <div className="space-y-6 text-center">
@@ -92,7 +89,7 @@ export function ResumenStep({
         <div>
           <div className="text-sm text-[var(--text-secondary)] mb-1">Número de pedido:</div>
           <div className="font-mono font-bold text-[var(--color-green-text)] text-lg">
-            {ventaId ? `ORD-${ventaId.slice(0, 8).toUpperCase()}` : 'Procesando...'}
+            {pedidoId ? `ORD-${pedidoId.slice(0, 8).toUpperCase()}` : 'Procesando...'}
           </div>
         </div>
 
@@ -158,8 +155,8 @@ export function ResumenStep({
 
       {/* Botones de acción */}
       <div className="space-y-3 pt-4">
-        {ventaId ? (
-          <Link href={`/pedidos/${ventaId}`}>
+        {pedidoId ? (
+          <Link href={`/pedidos/${pedidoId}`}>
             <Button
               variant="primary"
               size="lg"
