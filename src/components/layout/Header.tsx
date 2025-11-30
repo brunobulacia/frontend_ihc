@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useCartStore } from '@/lib/store/cartStore';
 
 export function Header() {
-  const { items } = useCartStore();
+  const { items, toggleSidebar } = useCartStore();
   const itemCount = items.reduce((sum, item) => sum + item.cantidad, 0);
 
   return (
@@ -44,8 +44,8 @@ export function Header() {
             </Link>
 
             {/* Botón Carrito con badge */}
-            <Link 
-              href="/menu"
+            <button
+              onClick={toggleSidebar}
               className="relative flex items-center gap-2 text-[var(--color-orange-accent)] hover:text-[var(--color-orange-hover)] transition-colors"
               aria-label="Carrito de compras"
             >
@@ -59,7 +59,7 @@ export function Header() {
                   {itemCount}
                 </span>
               )}
-            </Link>
+            </button>
           </div>
         </div>
       </div>

@@ -10,7 +10,7 @@ export function CartButton() {
   return (
     <button
       onClick={toggleSidebar}
-      className="fixed bottom-6 right-6 lg:hidden bg-[#C85A2B] hover:bg-[#B54E23] text-white rounded-full p-4 shadow-lg transition-all z-30 flex items-center justify-center"
+      className="fixed bottom-6 right-6 lg:hidden bg-[#C85A2B] hover:bg-[#B54E23] text-white rounded-full p-4 shadow-lg transition-all z-[60] flex items-center justify-center"
     >
       <svg
         width="24"
