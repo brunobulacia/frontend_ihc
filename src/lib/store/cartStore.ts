@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { CartItem, Producto } from '@/types/carrito';
 import { carritosApi, itemsCarritoApi, productosApi } from '@/lib/api/client';
+import { remoteLog } from '@/lib/utils/remoteLog';
 
 interface CartStore {
   items: CartItem[];
@@ -31,41 +32,39 @@ export const useCartStore = create<CartStore>()(
       initCarrito: async (userId: string) => {
         try {
           set({ isLoading: true });
-          const carritoId = get().carritoId;
           
-          // Si no hay carrito, crear uno nuevo
-          if (!carritoId) {
-            const carrito = await carritosApi.create(userId);
-            set({ carritoId: carrito.id, items: [] });
+          remoteLog.info('🔵 CartStore.initCarrito - Iniciando', { userId });
+          
+          // Siempre buscar o crear el carrito del usuario
+          const carrito = await carritosApi.findOrCreateByUserId(userId);
+          
+          remoteLog.info('✅ CartStore - Carrito obtenido/creado', { carritoId: carrito.id });
+          
+          // Verificar que itemCarrito existe y es un array
+          if (carrito && Array.isArray(carrito.itemCarrito)) {
+            // Filtrar solo los items activos
+            const itemsActivos = carrito.itemCarrito.filter((item) => item.isActive);
+            const itemsWithProducts = await Promise.all(
+              itemsActivos.map(async (item) => ({
+                ...item,
+                producto: await productosApi.getById(item.productoId),
+              }))
+            );
+            set({ carritoId: carrito.id, items: itemsWithProducts });
+            remoteLog.info('CartStore - Items cargados', { itemsCount: itemsWithProducts.length });
           } else {
-            // Cargar items del carrito existente
-            try {
-              const carrito = await carritosApi.getById(carritoId);
-              
-              // Verificar que itemCarrito existe y es un array
-              if (carrito && Array.isArray(carrito.itemCarrito)) {
-                // Filtrar solo los items activos
-                const itemsActivos = carrito.itemCarrito.filter((item) => item.isActive);
-                const itemsWithProducts = await Promise.all(
-                  itemsActivos.map(async (item) => ({
-                    ...item,
-                    producto: await productosApi.getById(item.productoId),
-                  }))
-                );
-                set({ items: itemsWithProducts });
-              } else {
-                set({ items: [] });
-              }
-            } catch (loadError) {
-              // Si falla cargar el carrito, crear uno nuevo
-              const carrito = await carritosApi.create(userId);
-              set({ carritoId: carrito.id, items: [] });
-            }
+            set({ carritoId: carrito.id, items: [] });
+            remoteLog.info('CartStore - Carrito vacío');
           }
         } catch (error) {
+          remoteLog.error('❌ CartStore - Error inicializando', {
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined
+          });
           // En caso de error, crear un carrito local temporal
           const tempCarritoId = `temp-${Date.now()}`;
           set({ carritoId: tempCarritoId, items: [] });
+          remoteLog.warn('⚠️ CartStore - Carrito temporal creado', { carritoId: tempCarritoId });
         } finally {
           set({ isLoading: false });
         }
@@ -76,13 +75,23 @@ export const useCartStore = create<CartStore>()(
           const { items, carritoId } = get();
           
           if (!carritoId) {
+            remoteLog.error('CartStore.addItem - Carrito no inicializado', { productoId: producto.id });
             throw new Error('Carrito no inicializado');
           }
+
+          remoteLog.info('🔵 CartStore.addItem - Agregando producto', {
+            productoId: producto.id,
+            cantidad,
+            carritoId
+          });
 
           // Verificar si el producto ya existe en el carrito
           const existingItem = items.find(item => item.productoId === producto.id);
 
           if (existingItem) {
+            remoteLog.info('CartStore - Producto ya existe, actualizando cantidad', {
+              itemId: existingItem.id
+            });
             // Actualizar cantidad
             await get().updateItemQuantity(existingItem.id, existingItem.cantidad + cantidad);
           } else {

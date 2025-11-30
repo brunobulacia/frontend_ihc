@@ -9,6 +9,7 @@ import { CartButton } from '@/components/cart/CartButton';
 import { useCartStore } from '@/lib/store/cartStore';
 import { useProductos } from '@/lib/query/useProductos';
 import { Producto } from '@/types/producto';
+import { remoteLog } from '@/lib/utils/remoteLog';
 
 // Componente separado que usa useSearchParams
 function MenuContent() {
@@ -25,23 +26,40 @@ function MenuContent() {
   const userIdFromUrl = searchParams.get('userId') || '';
   
   useEffect(() => {
+    remoteLog.info('🔍 Menu Page - Iniciando', {
+      userIdFromUrl,
+      storedUserId: localStorage.getItem('telegram_user_id'),
+      allParams: Object.fromEntries(searchParams.entries()),
+      url: typeof window !== 'undefined' ? window.location.href : 'N/A'
+    });
+
     // Si viene userId en la URL, guardarlo en localStorage
     if (userIdFromUrl) {
       localStorage.setItem('telegram_user_id', userIdFromUrl);
+      remoteLog.info('✅ Menu Page - userId guardado en localStorage', { userIdFromUrl });
       initCarrito(userIdFromUrl);
     } else {
       // Si no viene en URL, intentar recuperar de localStorage
       const storedUserId = localStorage.getItem('telegram_user_id');
       if (storedUserId) {
+        remoteLog.info('Menu Page - Usando userId de localStorage', { storedUserId });
         initCarrito(storedUserId);
+      } else {
+        remoteLog.warn('⚠️ Menu Page - No hay userId disponible');
       }
     }
-  }, [initCarrito, userIdFromUrl]);
+  }, [initCarrito, userIdFromUrl, searchParams]);
 
   const handleAddToCart = async (producto: Producto) => {
     try {
+      remoteLog.info('Menu Page - Agregando producto', { productoId: producto.id });
       await addItem(producto, 1);
+      remoteLog.info('✅ Menu Page - Producto agregado', { productoId: producto.id });
     } catch (err) {
+      remoteLog.error('Menu Page - Error agregando producto', {
+        error: err instanceof Error ? err.message : String(err),
+        productoId: producto.id
+      });
       alert('Error al agregar el producto al carrito');
     }
   };

@@ -1,11 +1,12 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import { Header } from '@/components/layout/Header';
 import { usePedidos } from '@/lib/query/usePedidos';
 import { EstadoPedido } from '@/types/pedido';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { remoteLog } from '@/lib/utils/remoteLog';
 
 // Componente separado que usa useSearchParams
 function PedidosContent() {
@@ -16,6 +17,16 @@ function PedidosContent() {
   const userIdFromUrl = searchParams.get('userId') || '';
   const storedUserId = typeof window !== 'undefined' ? localStorage.getItem('telegram_user_id') : null;
   const userId = userIdFromUrl || storedUserId || '';
+
+  useEffect(() => {
+    remoteLog.info('🔍 Pedidos Page - userId detectado', {
+      userIdFromUrl,
+      storedUserId,
+      userId,
+      allParams: Object.fromEntries(searchParams.entries()),
+      url: typeof window !== 'undefined' ? window.location.href : 'N/A'
+    });
+  }, [userId, userIdFromUrl, storedUserId, searchParams]);
 
   const { data: pedidos, isLoading, error } = usePedidos(userId);
 

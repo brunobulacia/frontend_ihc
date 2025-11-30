@@ -7,6 +7,7 @@ import type { CartItem } from '@/types/carrito';
 import { useCartStore } from '@/lib/store/cartStore';
 import { useCreatePedido } from '@/lib/query/usePedidos';
 import Link from 'next/link';
+import { remoteLog } from '@/lib/utils/remoteLog';
 
 interface ResumenStepProps {
   direccion: string;
@@ -42,20 +43,41 @@ export function ResumenStep({
         const storedUserId = typeof window !== 'undefined' ? localStorage.getItem('telegram_user_id') : null;
         const userId = userIdFromUrl || storedUserId || '';
 
+        remoteLog.info('🔍 ResumenStep - Intentando crear pedido', {
+          userIdFromUrl,
+          storedUserId,
+          userId,
+          allParams: Object.fromEntries(searchParams.entries()),
+          direccion,
+          itemsCount: items.length
+        });
+
         if (!userId) {
+          remoteLog.error('ResumenStep - userId no definido', {
+            searchParamsKeys: Array.from(searchParams.keys())
+          });
           throw new Error('userId no definido');
         }
 
+        remoteLog.info('ResumenStep - Creando pedido en backend...', { userId, direccion });
         const result = await createPedido.mutateAsync({
           userId,
           direccion,
         });
         
         if (result && result.pedidoId) {
+          remoteLog.info('✅ ResumenStep - Pedido creado exitosamente', {
+            pedidoId: result.pedidoId
+          });
           setPedidoId(result.pedidoId);
         }
         await clearCart();
+        remoteLog.info('ResumenStep - Carrito limpiado');
       } catch (error) {
+        remoteLog.error('ResumenStep - Error al crear pedido', {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined
+        });
         await clearCart();
       }
     };

@@ -55,6 +55,11 @@ export const categoriasApi = {
 
 // ============== CARRITOS ==============
 export const carritosApi = {
+  findOrCreateByUserId: async (userId: string): Promise<Carrito> => {
+    const response = await fetch(`${API_URL}/carritos/user/${userId}`);
+    return handleResponse<Carrito>(response);
+  },
+
   create: async (userId: string): Promise<Carrito> => {
     const response = await fetch(`${API_URL}/carritos`, {
       method: 'POST',
