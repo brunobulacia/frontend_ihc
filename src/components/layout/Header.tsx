@@ -2,17 +2,26 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCartStore } from '@/lib/store/cartStore';
+import { Suspense } from 'react';
 
-export function Header() {
-  const { items, toggleSidebar } = useCartStore();
+function HeaderContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const userId = searchParams.get('userId') || '';
+  const { items } = useCartStore();
   const itemCount = items.reduce((sum, item) => sum + item.cantidad, 0);
+
+  const handleCartClick = () => {
+    router.push(`/carrito?userId=${userId}`);
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 bg-[var(--color-header-bg)]/95 backdrop-blur-sm border-b border-[var(--color-yellow-primary)]/20 z-50">
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
-          <Link href="/menu" className="flex items-center gap-2">
+          <Link href={`/menu?userId=${userId}`} className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-lg overflow-hidden relative">
               <Image 
                 src="/logo-icon.jpg" 
@@ -32,7 +41,7 @@ export function Header() {
           <div className="flex items-center gap-4">
             {/* Botón Mis Pedidos */}
             <Link 
-              href="/pedidos"
+              href={`/pedidos?userId=${userId}`}
               className="flex items-center gap-2 text-[var(--color-orange-accent)] hover:text-[var(--color-orange-hover)] transition-colors"
               aria-label="Mis Pedidos"
             >
@@ -45,7 +54,7 @@ export function Header() {
 
             {/* Botón Carrito con badge */}
             <button
-              onClick={toggleSidebar}
+              onClick={handleCartClick}
               className="relative flex items-center gap-2 text-[var(--color-orange-accent)] hover:text-[var(--color-orange-hover)] transition-colors"
               aria-label="Carrito de compras"
             >
@@ -64,5 +73,24 @@ export function Header() {
         </div>
       </div>
     </header>
+  );
+}
+
+export function Header() {
+  return (
+    <Suspense fallback={
+      <header className="fixed top-0 left-0 right-0 bg-[var(--color-header-bg)]/95 backdrop-blur-sm border-b border-[var(--color-yellow-primary)]/20 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-lg bg-gray-200 animate-pulse" />
+              <div className="w-24 h-6 bg-gray-200 animate-pulse rounded" />
+            </div>
+          </div>
+        </div>
+      </header>
+    }>
+      <HeaderContent />
+    </Suspense>
   );
 }

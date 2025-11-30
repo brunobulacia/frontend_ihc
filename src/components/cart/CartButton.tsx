@@ -1,15 +1,23 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCartStore } from '@/lib/store/cartStore';
 
-export function CartButton() {
-  const { toggleSidebar, getItemCount } = useCartStore();
+function CartButtonContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const userId = searchParams.get('userId') || '';
+  const { getItemCount } = useCartStore();
   const itemCount = getItemCount();
+
+  const handleClick = () => {
+    router.push(`/carrito?userId=${userId}`);
+  };
 
   return (
     <button
-      onClick={toggleSidebar}
+      onClick={handleClick}
       className="fixed bottom-6 right-6 lg:hidden bg-[#C85A2B] hover:bg-[#B54E23] text-white rounded-full p-4 shadow-lg transition-all z-[60] flex items-center justify-center"
     >
       <svg
@@ -32,5 +40,13 @@ export function CartButton() {
         </span>
       )}
     </button>
+  );
+}
+
+export function CartButton() {
+  return (
+    <Suspense fallback={null}>
+      <CartButtonContent />
+    </Suspense>
   );
 }
