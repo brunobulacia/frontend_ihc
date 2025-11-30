@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Header } from '@/components/layout/Header';
 import { ProductCard } from '@/components/products/ProductCard';
 import { CartSidebar } from '@/components/cart/CartSidebar';
@@ -18,9 +19,9 @@ export default function MenuPage() {
     error,
   } = useProductos();
 
-  // Inicializar carrito
-  // TODO: Reemplazar 'userId' por el valor real (por ejemplo, desde contexto o props)
-  const userId = '';
+  // Leer userId de la query string
+  const searchParams = useSearchParams();
+  const userId = searchParams.get('userId') || '';
   useEffect(() => {
     if (userId) {
       initCarrito(userId);

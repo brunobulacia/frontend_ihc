@@ -5,12 +5,12 @@ import { Header } from '@/components/layout/Header';
 import { usePedidos } from '@/lib/query/usePedidos';
 import { EstadoPedido } from '@/types/pedido';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-// TODO: Reemplazar '' por el userId real (por ejemplo, desde props, contexto o parámetro)
 export default function PedidosPage() {
   const router = useRouter();
-  const userId = '';
+  const searchParams = useSearchParams();
+  const userId = searchParams.get('userId') || '';
   const { data: pedidos, isLoading, error } = usePedidos(userId);
 
   const getEstadoColor = (estado: EstadoPedido) => {

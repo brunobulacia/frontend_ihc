@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import type { CartItem } from '@/types/carrito';
 import { useCartStore } from '@/lib/store/cartStore';
@@ -29,14 +30,14 @@ export function ResumenStep({
   const hasCreated = useRef(false);
 
   // Crear pedido y limpiar carrito cuando se confirma el pedido
+  const searchParams = useSearchParams();
   useEffect(() => {
     if (hasCreated.current) return;
     hasCreated.current = true;
 
     const crearPedido = async () => {
       try {
-        // TODO: Reemplazar 'userId' por el valor real (por ejemplo, desde props)
-        const userId = '';
+        const userId = searchParams.get('userId') || '';
         if (!userId) throw new Error('userId no definido');
         const result = await createPedido.mutateAsync({
           userId,
@@ -55,7 +56,7 @@ export function ResumenStep({
     };
 
     crearPedido();
-  }, [items, direccion, createPedido, clearCart]);
+  }, [items, direccion, createPedido, clearCart, searchParams]);
 
   return (
     <div className="space-y-6 text-center">
