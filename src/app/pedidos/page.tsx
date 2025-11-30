@@ -11,7 +11,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 function PedidosContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const userId = searchParams.get('userId') || '';
+  // Telegram pasa el parámetro startapp con el userId
+  const userId = searchParams.get('userId') || searchParams.get('tgWebAppStartParam') || '';
   const { data: pedidos, isLoading, error } = usePedidos(userId);
 
   const getEstadoColor = (estado: EstadoPedido) => {

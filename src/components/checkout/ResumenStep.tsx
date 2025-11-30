@@ -37,7 +37,8 @@ export function ResumenStep({
 
     const crearPedido = async () => {
       try {
-        const userId = searchParams.get('userId') || '';
+        // Telegram pasa el parámetro startapp con el userId
+        const userId = searchParams.get('userId') || searchParams.get('tgWebAppStartParam') || '';
         if (!userId) throw new Error('userId no definido');
         const result = await createPedido.mutateAsync({
           userId,

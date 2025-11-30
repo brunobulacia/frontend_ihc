@@ -22,14 +22,19 @@ function MenuContent() {
 
   // Leer userId de la query string
   const searchParams = useSearchParams();
-  const userId = searchParams.get('userId') || '';
+  // Telegram pasa el parámetro startapp con el userId
+  const userId = searchParams.get('userId') || searchParams.get('tgWebAppStartParam') || '';
   
   useEffect(() => {
-    console.log('userId en menu:', userId);
+    console.log('🔍 userId en menu:', userId);
+    console.log('🔍 tgWebAppStartParam:', searchParams.get('tgWebAppStartParam'));
     if (userId) {
+      console.log('✅ Inicializando carrito con userId:', userId);
       initCarrito(userId);
+    } else {
+      console.warn('⚠️ No se encontró userId en URL');
     }
-  }, [initCarrito, userId]);
+  }, [initCarrito, userId, searchParams]);
 
   const handleAddToCart = async (producto: Producto) => {
     try {
