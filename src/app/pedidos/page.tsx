@@ -1,28 +1,17 @@
 'use client';
 
-import { Suspense, useEffect } from 'react';
+import { Suspense } from 'react';
 import { Header } from '@/components/layout/Header';
 import { usePedidos } from '@/lib/query/usePedidos';
 import { EstadoPedido } from '@/types/pedido';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { remoteLog } from '@/lib/utils/remoteLog';
 
 // Componente separado que usa useSearchParams
 function PedidosContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // Telegram pasa el parámetro startapp con el userId
-  const userId = searchParams.get('userId') || searchParams.get('tgWebAppStartParam') || '';
-  
-  useEffect(() => {
-    remoteLog.info('🔍 Pedidos Page - userId detectado', {
-      userId,
-      tgWebAppStartParam: searchParams.get('tgWebAppStartParam'),
-      allParams: Object.fromEntries(searchParams.entries()),
-      url: typeof window !== 'undefined' ? window.location.href : 'N/A'
-    });
-  }, [userId, searchParams]);
+  const userId = searchParams.get('userId') || '';
 
   const { data: pedidos, isLoading, error } = usePedidos(userId);
 

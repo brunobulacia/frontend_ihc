@@ -9,7 +9,6 @@ import { CartButton } from '@/components/cart/CartButton';
 import { useCartStore } from '@/lib/store/cartStore';
 import { useProductos } from '@/lib/query/useProductos';
 import { Producto } from '@/types/producto';
-import { remoteLog } from '@/lib/utils/remoteLog';
 
 // Componente separado que usa useSearchParams
 function MenuContent() {
@@ -23,37 +22,18 @@ function MenuContent() {
 
   // Leer userId de la query string
   const searchParams = useSearchParams();
-  // Telegram pasa el parámetro startapp con el userId
-  const userId = searchParams.get('userId') || searchParams.get('tgWebAppStartParam') || '';
+  const userId = searchParams.get('userId') || '';
   
   useEffect(() => {
-    remoteLog.info('🔍 Menu Page - Intentando leer userId', {
-      userId,
-      tgWebAppStartParam: searchParams.get('tgWebAppStartParam'),
-      allParams: Object.fromEntries(searchParams.entries()),
-      url: typeof window !== 'undefined' ? window.location.href : 'N/A'
-    });
-
     if (userId) {
-      remoteLog.info('✅ Menu Page - Inicializando carrito', { userId });
       initCarrito(userId);
-    } else {
-      remoteLog.warn('⚠️ Menu Page - No se encontró userId en URL', {
-        searchParamsKeys: Array.from(searchParams.keys())
-      });
     }
-  }, [initCarrito, userId, searchParams]);
+  }, [initCarrito, userId]);
 
   const handleAddToCart = async (producto: Producto) => {
     try {
-      remoteLog.info('Menu Page - Agregando producto', { productoId: producto.id, userId });
       await addItem(producto, 1);
-      remoteLog.info('Menu Page - Producto agregado exitosamente', { productoId: producto.id });
     } catch (err) {
-      remoteLog.error('Menu Page - Error agregando producto', {
-        error: err instanceof Error ? err.message : String(err),
-        productoId: producto.id
-      });
       alert('Error al agregar el producto al carrito');
     }
   };
