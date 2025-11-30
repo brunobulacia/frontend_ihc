@@ -37,7 +37,10 @@ export function ResumenStep({
 
     const crearPedido = async () => {
       try {
-        const userId = searchParams.get('userId') || '';
+        // Intentar obtener userId de URL o localStorage
+        const userIdFromUrl = searchParams.get('userId') || '';
+        const storedUserId = typeof window !== 'undefined' ? localStorage.getItem('telegram_user_id') : null;
+        const userId = userIdFromUrl || storedUserId || '';
 
         if (!userId) {
           throw new Error('userId no definido');

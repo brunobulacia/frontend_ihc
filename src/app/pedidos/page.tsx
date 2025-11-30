@@ -11,7 +11,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 function PedidosContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const userId = searchParams.get('userId') || '';
+  
+  // Intentar obtener userId de URL o localStorage
+  const userIdFromUrl = searchParams.get('userId') || '';
+  const storedUserId = typeof window !== 'undefined' ? localStorage.getItem('telegram_user_id') : null;
+  const userId = userIdFromUrl || storedUserId || '';
 
   const { data: pedidos, isLoading, error } = usePedidos(userId);
 

@@ -20,15 +20,23 @@ function MenuContent() {
     error,
   } = useProductos();
 
-  // Leer userId de la query string
+  // Leer userId de la query string o localStorage
   const searchParams = useSearchParams();
-  const userId = searchParams.get('userId') || '';
+  const userIdFromUrl = searchParams.get('userId') || '';
   
   useEffect(() => {
-    if (userId) {
-      initCarrito(userId);
+    // Si viene userId en la URL, guardarlo en localStorage
+    if (userIdFromUrl) {
+      localStorage.setItem('telegram_user_id', userIdFromUrl);
+      initCarrito(userIdFromUrl);
+    } else {
+      // Si no viene en URL, intentar recuperar de localStorage
+      const storedUserId = localStorage.getItem('telegram_user_id');
+      if (storedUserId) {
+        initCarrito(storedUserId);
+      }
     }
-  }, [initCarrito, userId]);
+  }, [initCarrito, userIdFromUrl]);
 
   const handleAddToCart = async (producto: Producto) => {
     try {
