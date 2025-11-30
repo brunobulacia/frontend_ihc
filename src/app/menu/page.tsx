@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Header } from '@/components/layout/Header';
 import { ProductCard } from '@/components/products/ProductCard';
@@ -10,7 +10,8 @@ import { useCartStore } from '@/lib/store/cartStore';
 import { useProductos } from '@/lib/query/useProductos';
 import { Producto } from '@/types/producto';
 
-export default function MenuPage() {
+// Componente separado que usa useSearchParams
+function MenuContent() {
   const { addItem, initCarrito } = useCartStore();
 
   const {
@@ -22,6 +23,7 @@ export default function MenuPage() {
   // Leer userId de la query string
   const searchParams = useSearchParams();
   const userId = searchParams.get('userId') || '';
+  
   useEffect(() => {
     if (userId) {
       initCarrito(userId);
@@ -40,13 +42,11 @@ export default function MenuPage() {
   return (
     <div className="min-h-screen bg-[var(--background-gray)]">
       <Header />
-      
       <div className="flex pt-16 md:pt-20">
         {/* Contenido principal */}
         <main className="flex-1 p-3 sm:p-6 lg:pr-0">
           <div className="max-w-7xl mx-auto">
             <h1 className="text-2xl sm:text-3xl font-bold text-[#0D5F3F] mb-4 sm:mb-6">Menú</h1>
-
             {/* Loading state */}
             {isLoading && (
               <div className="text-center py-12">
@@ -54,14 +54,12 @@ export default function MenuPage() {
                 <p className="mt-4 text-[#0D5F3F]">Cargando productos...</p>
               </div>
             )}
-
             {/* Error state */}
             {error && (
               <div className="bg-[var(--color-error-bg)] border border-[var(--color-error-border)] rounded-lg p-4 text-[var(--color-error-text)]">
                 {error.message || 'Error al cargar productos'}
               </div>
             )}
-
             {/* Grid de productos */}
             {!isLoading && !error && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
@@ -74,7 +72,6 @@ export default function MenuPage() {
                 ))}
               </div>
             )}
-
             {/* Empty state */}
             {!isLoading && !error && productos.length === 0 && (
               <div className="text-center py-12">
@@ -83,15 +80,29 @@ export default function MenuPage() {
             )}
           </div>
         </main>
-
         {/* Sidebar del carrito (desktop) */}
         <aside className="hidden lg:block w-96 sticky top-20 h-[calc(100vh-5rem)] overflow-hidden">
           <CartSidebar />
         </aside>
       </div>
-
       {/* Botón flotante del carrito (mobile) */}
       <CartButton />
     </div>
+  );
+}
+
+// Componente principal que envuelve con Suspense
+export default function MenuPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[var(--background-gray)] flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#F5C842] border-t-transparent"></div>
+          <p className="mt-4 text-[#0D5F3F]">Cargando menú...</p>
+        </div>
+      </div>
+    }>
+      <MenuContent />
+    </Suspense>
   );
 }

@@ -1,13 +1,14 @@
 'use client';
 
-
+import { Suspense } from 'react';
 import { Header } from '@/components/layout/Header';
 import { usePedidos } from '@/lib/query/usePedidos';
 import { EstadoPedido } from '@/types/pedido';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function PedidosPage() {
+// Componente separado que usa useSearchParams
+function PedidosContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const userId = searchParams.get('userId') || '';
@@ -173,5 +174,21 @@ export default function PedidosPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+// Componente principal que exportas
+export default function PedidosPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[var(--background-beige)] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-green-text)] mx-auto"></div>
+          <p className="mt-4 text-[var(--text-secondary)]">Cargando pedidos...</p>
+        </div>
+      </div>
+    }>
+      <PedidosContent />
+    </Suspense>
   );
 }
