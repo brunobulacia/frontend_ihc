@@ -33,28 +33,41 @@ export const useCartStore = create<CartStore>()(
         try {
           set({ isLoading: true });
           
-          remoteLog.info('🔵 CartStore.initCarrito - Iniciando', { userId });
+          remoteLog.info('🔵 CartStore.initCarrito - Iniciando', { 
+            userId,
+            currentCarritoId: get().carritoId 
+          });
           
-          // Siempre buscar o crear el carrito del usuario
+          // SIEMPRE buscar el carrito actual del usuario en el backend
+          // Esto asegura que después de limpiar el carrito, obtengamos uno nuevo
           const carrito = await carritosApi.findOrCreateByUserId(userId);
           
-          remoteLog.info('✅ CartStore - Carrito obtenido/creado', { carritoId: carrito.id });
+          remoteLog.info('✅ CartStore - Carrito obtenido/creado', { 
+            carritoId: carrito.id,
+            hadPreviousId: !!get().carritoId
+          });
           
           // Verificar que itemCarrito existe y es un array
           if (carrito && Array.isArray(carrito.itemCarrito)) {
             // Filtrar solo los items activos
             const itemsActivos = carrito.itemCarrito.filter((item) => item.isActive);
-            const itemsWithProducts = await Promise.all(
-              itemsActivos.map(async (item) => ({
-                ...item,
-                producto: await productosApi.getById(item.productoId),
-              }))
-            );
-            set({ carritoId: carrito.id, items: itemsWithProducts });
-            remoteLog.info('CartStore - Items cargados', { itemsCount: itemsWithProducts.length });
+            
+            if (itemsActivos.length > 0) {
+              const itemsWithProducts = await Promise.all(
+                itemsActivos.map(async (item) => ({
+                  ...item,
+                  producto: await productosApi.getById(item.productoId),
+                }))
+              );
+              set({ carritoId: carrito.id, items: itemsWithProducts });
+              remoteLog.info('CartStore - Items cargados', { itemsCount: itemsWithProducts.length });
+            } else {
+              set({ carritoId: carrito.id, items: [] });
+              remoteLog.info('CartStore - Carrito vacío (sin items activos)');
+            }
           } else {
             set({ carritoId: carrito.id, items: [] });
-            remoteLog.info('CartStore - Carrito vacío');
+            remoteLog.info('CartStore - Carrito vacío (sin itemCarrito)');
           }
         } catch (error) {
           remoteLog.error('❌ CartStore - Error inicializando', {
@@ -189,12 +202,12 @@ export const useCartStore = create<CartStore>()(
           const { carritoId } = get();
           if (!carritoId) return;
 
-          // Limpiar solo el estado local, tanto para carrito temporal como real
-          set({ items: [] });
+          // Limpiar estado local Y eliminar el carritoId para forzar la creación de uno nuevo
+          set({ items: [], carritoId: null });
           if (carritoId.startsWith('temp-')) {
-            console.log('Carrito limpiado localmente (modo offline)');
+            console.log('Carrito temporal eliminado');
           } else {
-            console.log('Carrito limpiado localmente (carrito real, backend ya lo limpió)');
+            console.log('Carrito limpiado y carritoId eliminado (se creará uno nuevo en el próximo pedido)');
           }
         } catch (error) {
           console.error('Error limpiando carrito:', error);
